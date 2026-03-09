@@ -6,7 +6,7 @@ from datetime import datetime
 # --- 1. ALAPBEÁLLÍTÁSOK ÉS ADATOK ---
 st.set_page_config(page_title="Midnight RWF Tracker", layout="wide", initial_sidebar_state="expanded")
 
-ADMIN_PASSWORD = "guild_mester_jelszo"  # Ezt írd át a sajátodra!
+ADMIN_PASSWORD = "rwfpred"  # Ezt írd át a sajátodra!
 
 CLASS_COLORS = {
     "Death Knight": "#C41E3A", "Demon Hunter": "#A330C9", "Druid": "#FF7C0A",
