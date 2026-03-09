@@ -159,36 +159,68 @@ elif st.session_state.user:
 # --- 8. LEADERBOARD & RANGSOR ---
 # --- 8. LEADERBOARD & RANGSOR ---
 st.divider()
-st.header("🏆 Guild Leaderboard")
 
+# --- HIVATALOS COMP MEGJELENÍTÉSE (Ha már létezik) ---
 c.execute("SELECT data FROM official_wf WHERE id=1")
 wf_res = c.fetchone()
 wf_data = wf_res[0] if wf_res else None
+
+if wf_data:
+    with st.container():
+        st.markdown("""
+            <div style="background: rgba(255, 215, 0, 0.1); border: 2px solid #FFD700; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                <h2 style="color: #FFD700; margin-top: 0; text-align: center;">🏆 HIVATALOS MIDNIGHT RWF COMP</h2>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        wf_list = wf_data.split(",")
+        wf_cols = st.columns(5) # 4 sorban 5 ikon
+        for i, item in enumerate(wf_list):
+            cn, sn = item.split(":")
+            wf_cols[i%5].markdown(f"""
+                <div style="text-align: center; border-bottom: 2px solid {CLASS_COLORS.get(cn, '#FFF')}; margin-bottom: 15px; padding: 5px;">
+                    <small style="color: #ccc;">Slot {i+1}</small><br>
+                    <b style="color: {CLASS_COLORS.get(cn, '#FFF')}">{sn}</b><br>
+                    <span style="font-size: 0.8em;">{cn}</span>
+                </div>
+            """, unsafe_allow_html=True)
+    st.divider()
+
+st.header("📊 Guild Leaderboard")
 
 c.execute("SELECT user, data FROM predictions")
 users = c.fetchall()
 
 lb_list = []
 for u, d in users:
+    # Az admin (te) ne szerepeljen a ranglistán, hacsak nem akarod
+    if u == "Admin": continue
+    
     pts = calculate_points(d, wf_data)
-    # Százalékos arány (max 40 pont: 20 slot * 2 pont)
     accuracy = (pts / 40) * 100 if wf_data else 0
     lb_list.append({"Név": u, "Pont": pts, "Data": d, "Accuracy": accuracy})
 
-# CSAK AKKOR RENDEZZÜNK, HA VAN ADAT
 if lb_list:
     df = pd.DataFrame(lb_list).sort_values(by="Pont", ascending=False)
 
     for _, row in df.iterrows():
-        # Színes pontszám és százalék megjelenítése
         acc_text = f"({row['Accuracy']:.1f}%)" if wf_data else ""
-        with st.expander(f"**{row['Pont']} pont** {acc_text} — {row['Név']}"):
+        # Arany/Ezüst/Bronz kiemelés az első három helyezettnek
+        rank_icon = "👤"
+        if wf_data:
+            idx = df.index.get_loc(_)
+            if idx == 0: rank_icon = "🥇"
+            elif idx == 1: rank_icon = "🥈"
+            elif idx == 2: rank_icon = "🥉"
+
+        with st.expander(f"{rank_icon} **{row['Pont']} pont** {acc_text} — {row['Név']}"):
             if row['Data']:
                 d_list = row['Data'].split(",")
                 r_cols = st.columns(5)
                 for i, item in enumerate(d_list):
                     cn, sn = item.split(":")
-                    # Ha van hivatalos adat, jelöljük ki a találatokat
+                    
+                    # Találat ellenőrzése a vizuális visszajelzéshez
                     is_correct = False
                     if wf_data:
                         o_list = wf_data.split(",")
@@ -196,17 +228,18 @@ if lb_list:
                         if cn == o_cn and sn == o_sn:
                             is_correct = True
                     
-                    bg_style = "border: 1px solid #555;"
+                    # Stílus: ha eltalálta, zölden világít a keret
+                    bg_style = "border: 1px solid #444;"
                     if wf_data and is_correct:
-                        bg_style = "border: 2px solid #28a745; background: #1b4332;"
+                        bg_style = "border: 2px solid #28a745; background: rgba(40, 167, 69, 0.2);"
                     
                     r_cols[i%5].markdown(f"""
-                        <div style="{bg_style} padding: 5px; border-radius: 4px; margin-bottom: 5px;">
-                            <small>{sn}</small><br>
-                            <b style='color:{CLASS_COLORS.get(cn, "#FFF")}'>{cn}</b>
+                        <div style="{bg_style} padding: 8px; border-radius: 6px; margin-bottom: 8px; text-align: center;">
+                            <b style='color:{CLASS_COLORS.get(cn, "#FFF")}; font-size: 0.9em;'>{sn}</b><br>
+                            <small style='color:#bbb;'>{cn}</small>
                         </div>
                     """, unsafe_allow_html=True)
             else:
-                st.write("Még nem küldött be tippet.")
+                st.info("Még nincs beküldött tipp.")
 else:
-    st.info("Még nincs beküldött tipp a guildben. Légy te az első!")
+    st.info("Még nincsenek beküldött tippek.")
