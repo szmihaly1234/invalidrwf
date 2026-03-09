@@ -197,25 +197,25 @@ elif st.session_state.user:
     else:
         st.warning("🔒 A fogadás lezárult!")
 
-# --- 8. LEADERBOARD ---
+# --- 8. LEADERBOARD (FRISSÍTETT VIZUÁLIS KIÉRTÉKELÉSSEL) ---
 st.divider()
 c.execute("SELECT value FROM meta WHERE key='official_wf'")
 wf_data = c.fetchone()[0]
 
 if wf_data:
-    st.markdown("<h3 style='text-align:center;'>🏆 WORLD FIRST COMP</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center; color:#FFD700;'>🏆 HIVATALOS RWF COMP</h3>", unsafe_allow_html=True)
     wf_cols = st.columns(10)
     for i, item in enumerate(wf_data.split(",")):
         cn, sn = item.split(":")
-        wf_cols[i%10].markdown(f"<div style='font-size:10px; text-align:center; border-bottom:2px solid {CLASS_COLORS[cn]}'>{sn}</div>", unsafe_allow_html=True)
+        wf_cols[i%10].markdown(f"<div style='font-size:10px; text-align:center; border-bottom:2px solid {CLASS_COLORS.get(cn, '#FFF')}'>{sn}<br><b style='color:{CLASS_COLORS.get(cn, '#FFF')}'>{cn[:3]}</b></div>", unsafe_allow_html=True)
 
-st.header("📊 Ranglista")
+st.header("📊 Guild Ranglista")
 c.execute("SELECT username, prediction FROM users")
 all_users = c.fetchall()
 
 lb = []
 for u, d in all_users:
-    if u == "Admin": continue
+    if u == "Admin" or d == "": continue
     p = calculate_points(d, wf_data)
     lb.append({"Név": u, "Pont": p, "Data": d})
 
@@ -224,12 +224,53 @@ if lb:
     for _, row in df.iterrows():
         with st.expander(f"**{row['Pont']} pont** — {row['Név']}"):
             if row['Data']:
-                d_list = row['Data'].split(",")
+                u_list = row['Data'].split(",")
                 o_list = wf_data.split(",") if wf_data else []
+                
+                # Segédlista a sárga (csak kaszt) találatokhoz
+                # Ahhoz kell, hogy ne jelöljünk sárgával többet, mint amennyi valójában van a compban
+                rem_off_for_visual = list(o_list)
+                
+                # Előbb kiszedjük a telitalálatokat (Zöld), hogy ne zavarjanak be a sárgához
+                perfect_indices = []
+                for idx, u_item in enumerate(u_list):
+                    if u_item in rem_off_for_visual:
+                        perfect_indices.append(idx)
+                        rem_off_for_visual.remove(u_item)
+
                 r_cols = st.columns(5)
-                for j, item in enumerate(d_list):
+                for j, item in enumerate(u_list):
                     cn, sn = item.split(":")
-                    # Vizualizáció: zöld keret ha benne van a compban
-                    is_correct = item in o_list
-                    style = f"border: 1px solid {'#28a745' if is_correct else '#444'}; background: {'rgba(40,167,69,0.1)' if is_correct else 'none'}"
-                    r_cols[j%5].markdown(f"<div style='{style}; padding:5px; border-radius:3px; font-size:11px; text-align:center;'><b style='color:{CLASS_COLORS[cn]}'>{sn}</b></div>", unsafe_allow_html=True)
+                    
+                    # Alap stílus (nincs találat)
+                    style = "border: 1px solid #444; background: none;"
+                    label = ""
+                    
+                    if wf_data:
+                        if j in perfect_indices:
+                            # 2 PONT: ZÖLD (Teljes egyezés)
+                            style = "border: 2px solid #28a745; background: rgba(40, 167, 69, 0.25);"
+                            label = "✅"
+                        else:
+                            # Megnézzük, van-e ilyen kaszt a maradékban (1 PONT: SÁRGA)
+                            u_cls = cn
+                            found_class_idx = -1
+                            for i_off, o_item in enumerate(rem_off_for_visual):
+                                if u_cls == o_item.split(":")[0]:
+                                    found_class_idx = i_off
+                                    break
+                            
+                            if found_class_idx != -1:
+                                style = "border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.2);"
+                                label = "🔸"
+                                rem_off_for_visual.pop(found_class_idx)
+
+                    r_cols[j%5].markdown(f"""
+                        <div style="{style} padding:8px; border-radius:5px; font-size:11px; text-align:center; margin-bottom:5px;">
+                            <span style="float:right; font-size:8px;">{label}</span>
+                            <b style='color:{CLASS_COLORS.get(cn, "#FFF")}'>{sn}</b><br>
+                            <small style='color:#bbb;'>{cn}</small>
+                        </div>
+                    """, unsafe_allow_html=True)
+else:
+    st.info("Még nincsenek beküldött tippek.")
