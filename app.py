@@ -157,6 +157,7 @@ elif st.session_state.user:
         st.warning("🔒 A tippleadás lezárult. Nézd meg a rangsort alul!")
 
 # --- 8. LEADERBOARD & RANGSOR ---
+# --- 8. LEADERBOARD & RANGSOR ---
 st.divider()
 st.header("🏆 Guild Leaderboard")
 
@@ -170,17 +171,42 @@ users = c.fetchall()
 lb_list = []
 for u, d in users:
     pts = calculate_points(d, wf_data)
-    lb_list.append({"Név": u, "Pont": pts, "Data": d})
+    # Százalékos arány (max 40 pont: 20 slot * 2 pont)
+    accuracy = (pts / 40) * 100 if wf_data else 0
+    lb_list.append({"Név": u, "Pont": pts, "Data": d, "Accuracy": accuracy})
 
-df = pd.DataFrame(lb_list).sort_values(by="Pont", ascending=False)
+# CSAK AKKOR RENDEZZÜNK, HA VAN ADAT
+if lb_list:
+    df = pd.DataFrame(lb_list).sort_values(by="Pont", ascending=False)
 
-for _, row in df.iterrows():
-    with st.expander(f"{row['Pont']} pont — {row['Név']}"):
-        if row['Data']:
-            d_list = row['Data'].split(",")
-            r_cols = st.columns(5)
-            for i, item in enumerate(d_list):
-                cn, sn = item.split(":")
-                r_cols[i%5].markdown(f"<small>{sn}</small><br><b style='color:{CLASS_COLORS[cn]}'>{cn}</b>", unsafe_allow_html=True)
-        else:
-            st.write("Nincs megadott comp.")
+    for _, row in df.iterrows():
+        # Színes pontszám és százalék megjelenítése
+        acc_text = f"({row['Accuracy']:.1f}%)" if wf_data else ""
+        with st.expander(f"**{row['Pont']} pont** {acc_text} — {row['Név']}"):
+            if row['Data']:
+                d_list = row['Data'].split(",")
+                r_cols = st.columns(5)
+                for i, item in enumerate(d_list):
+                    cn, sn = item.split(":")
+                    # Ha van hivatalos adat, jelöljük ki a találatokat
+                    is_correct = False
+                    if wf_data:
+                        o_list = wf_data.split(",")
+                        o_cn, o_sn = o_list[i].split(":")
+                        if cn == o_cn and sn == o_sn:
+                            is_correct = True
+                    
+                    bg_style = "border: 1px solid #555;"
+                    if wf_data and is_correct:
+                        bg_style = "border: 2px solid #28a745; background: #1b4332;"
+                    
+                    r_cols[i%5].markdown(f"""
+                        <div style="{bg_style} padding: 5px; border-radius: 4px; margin-bottom: 5px;">
+                            <small>{sn}</small><br>
+                            <b style='color:{CLASS_COLORS.get(cn, "#FFF")}'>{cn}</b>
+                        </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.write("Még nem küldött be tippet.")
+else:
+    st.info("Még nincs beküldött tipp a guildben. Légy te az első!")
