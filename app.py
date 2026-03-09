@@ -7,7 +7,7 @@ st.set_page_config(page_title="Midnight RWF Tracker", layout="wide")
 
 ADMIN_PASSWORD = "rwfpred" # Írd át!
 # A Google Sheet URL-je (amit az imént másoltál ki)
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1SJpzwiqBkhIbNHqPv_TBBCc50Lnyo7mhF2fuOB9fvqM/edit?usp=sharing"
+SHEET_URL = "1SJpzwiqBkhIbNHqPv_TBBCc50Lnyo7mhF2fuOB9fvqM"
 
 CLASS_COLORS = {
     "Death Knight": "#C41E3A", "Demon Hunter": "#A330C9", "Druid": "#FF7C0A",
