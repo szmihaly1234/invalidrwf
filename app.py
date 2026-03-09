@@ -6,7 +6,7 @@ import json
 # --- 1. KONFIGURÁCIÓ ---
 st.set_page_config(page_title="Midnight RWF Tracker", layout="wide")
 
-ADMIN_PASSWORD = "guild_mester_jelszo" # Ezt írd át a sajátodra!
+ADMIN_PASSWORD = "rwfpred" # Ezt írd át a sajátodra!
 
 CLASS_COLORS = {
     "Death Knight": "#C41E3A", "Demon Hunter": "#A330C9", "Druid": "#FF7C0A",
