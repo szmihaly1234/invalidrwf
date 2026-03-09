@@ -7,7 +7,7 @@ from io import StringIO
 st.set_page_config(page_title="Midnight RWF Tracker", layout="wide")
 
 # CSAK AZ ID KELL (Kiszedtem neked a linkedből)
-SHEET_ID = "1SJpzwiqBkhIbNHqPv_TBBCc50Lnyo7mhF2fuOB9fvqM"
+SHEET_ID = "https://docs.google.com/spreadsheets/d/1SJpzwiqBkhIbNHqPv_TBBCc50Lnyo7mhF2fuOB9fvqM/edit?usp=sharing"
 ADMIN_PASSWORD = "rwfpred"
 
 # CSV export linkek a két munkalaphoz
